@@ -1,0 +1,18 @@
+This is a mirror of http://www.vim.org/scripts/script.php?script_id=2300
+
+This file is based on the perl.vim syntax definition that comes with vim, but with some heavy modifications intended to improve vim's perl highlighting.
+
+The list of changes includes:
+* 'new' and 'croak' are not keywords and no longer highlighted as such
+* Special highlighting for pragmas (e.g. "use warnings") now applies to all pragmas coming with perl
+* Fixed number highlighting ("0X" is not a valid hex prefix, "L" is not a valid suffix)
+* Fixed escape sequence highlighting ("\X123" is not a hex escape, "\123" is limited to three octal digits)
+* Lots of improvements in the matching of quoted constructs:
+  - vim no longer thinks "!" is a quoting operator (so "!!" works right)
+  - support for arbitrary quoting delimiters (e.g. "m%...%" works)
+  - I've also tried to make nesting work (e.g. "s[foo[bar]][b[a]z]g")
+* Full support for subroutine definitions (parsing of prototypes and attributes)
+* Recognizes v-strings and statement labels
+* "=>" quotes its LHS, even if it's a keyword
+* Perl 5.10 support: new keywords ('given', 'when', 'default', 'state', 'break') and regexp control operators ('PRUNE', 'SKIP', 'COMMIT', etc.)
+

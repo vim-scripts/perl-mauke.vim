@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Perl
 " Maintainer:	Lukas Mai <l.mai@web.de>
-" Last Change:	2008-07-15
+" Last Change:	2008-08-08
 "
 " Standard perl syntax file for vim by Nick Hibma <nick@van-laarhoven.org>
 " Modified by Lukas Mai
@@ -13,8 +13,8 @@
 " perl syntax highlighting, with defaults given:
 "
 " unlet perl_include_pod
-" unlet perl_want_scope_in_variables
-" unlet perl_extended_vars
+" unlet perl_no_scope_in_variables
+" unlet perl_no_extended_vars
 " unlet perl_string_as_statement
 " unlet perl_no_sync_on_sub
 " unlet perl_no_sync_on_global_var
@@ -112,35 +112,31 @@ syn match  perlVarPlain		 "$^[ACDEFHILMNOPRSTVWX]\="
 syn match  perlVarPlain		 "$[\\\"\[\]'&`+*.,;=%~!?@#$<>(-]"
 syn match  perlVarPlain		 "$\%(0\|[1-9]\d*\)"
 " Same as above, but avoids confusion in $::foo (equivalent to $main::foo)
-syn match  perlVarPlain		 "$:[^:]"
+syn match  perlVarPlain		 "$::\@!"
 " These variables are not recognized within matches.
 syn match  perlVarNotInMatches	 "$[|)]"
 " This variable is not recognized within matches delimited by m//.
 syn match  perlVarSlash		 "$/"
 
 " And plain identifiers
-syn match  perlPackageRef	 "\%(\h\w*\)\=\%(::\|'\)\I"me=e-1 contained
+syn match  perlPackageRef	 "[$@#%*&]\%(\%(::\|'\)\=\I\i*\%(\%(::\|'\)\I\i*\)*\)\=\%(::\|'\)\I"ms=s+1,me=e-1 contained
 
-" To highlight packages in variables as a scope reference - i.e. in $pack::var,
-" pack:: is a scope, just set "perl_want_scope_in_variables"
-" If you *want* complex things like @{${"foo"}} to be processed,
-" just set the variable "perl_extended_vars"...
+" To not highlight packages in variables as a scope reference - i.e. in
+" $pack::var, pack:: is a scope, just set "perl_no_scope_in_variables"
+" If you don't want complex things like @{${"foo"}} to be processed,
+" just set the variable "perl_no_extended_vars"...
 
-" FIXME value between {} should be marked as string. is treated as such by Perl.
-" At the moment it is marked as something greyish instead of read. Probably todo
-" with transparency. Or maybe we should handle the bare word in that case. or make it into
-
-if exists("perl_want_scope_in_variables")
-  syn match  perlVarPlain	"\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
-  syn match  perlVarPlain2	"%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>" contains=perlPackageRef
-  syn match  perlFunctionName	"&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+if !exists("perl_no_scope_in_variables")
+  syn match  perlVarPlain       "\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn match  perlVarPlain2                   "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef
+  syn match  perlFunctionName                "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" contains=perlPackageRef nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
 else
-  syn match  perlVarPlain	"\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
-  syn match  perlVarPlain2	"%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>"
-  syn match  perlFunctionName	"&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\>" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn match  perlVarPlain       "\%([@$]\|\$#\)\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
+  syn match  perlVarPlain2                   "%\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)"
+  syn match  perlFunctionName                "&\$*\%(\I\i*\)\=\%(\%(::\|'\)\I\i*\)*\%(::\|\i\@<=\)" nextgroup=perlVarMember,perlVarSimpleMember,perlMethod
 endif
 
-if exists("perl_extended_vars")
+if !exists("perl_no_extended_vars")
   syn cluster perlExpr		contains=perlStatementIndirObjWrap,perlStatementScalar,perlStatementRegexp,perlStatementNumeric,perlStatementList,perlStatementHash,perlStatementFiles,perlStatementTime,perlStatementMisc,perlVarPlain,perlVarPlain2,perlVarNotInMatches,perlVarSlash,perlVarBlock,perlVarBlock2,perlShellCommand,perlFloat,perlNumber,perlStringUnexpanded,perlString,perlQQ,perlArrow,perlGenericBlock
   syn region perlArrow		matchgroup=perlArrow start="->\s*(" end=")" contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod contained
   syn region perlArrow		matchgroup=perlArrow start="->\s*\[" end="\]" contains=@perlExpr nextgroup=perlVarMember,perlVarSimpleMember,perlMethod contained
@@ -167,10 +163,10 @@ syn match  perlFiledescStatementNocomma "(\=\s*\u\w*\s*[^, \t]"me=e-1 transparen
 syn match  perlFiledescStatement	"\u\w*" contained
 
 " Special characters in strings and matches
-syn match  perlSpecialString	"\\\%(\o\{1,3}\|x\%({\x\+}\|\x\{2}\)\|c.\|[^cx]\)" contained extend
+syn match  perlSpecialString	"\\\%(\o\{1,3}\|x\%({\x\+}\|\x\{1,2}\)\|c.\|[^cx]\)" contained extend
 syn match  perlSpecialStringU2	"\\." extend contained transparent contains=NONE
 syn match  perlSpecialStringU	"\\\\" contained
-syn match  perlSpecialMatch	"\\\d" contained extend
+syn match  perlSpecialMatch	"\\[1-9]" contained extend
 syn match  perlSpecialMatch	"\\g\%(\d\+\|{\%(-\=\d\+\|\h\w*\)}\)" contained
 syn match  perlSpecialMatch	"\\k\%(<\h\w*>\|'\h\w*'\)" contained
 syn match  perlSpecialMatch	"{\d\+\%(,\%(\d\+\)\=\)\=}" contained
@@ -357,7 +353,7 @@ syn match perlSubName +\%(\h\|::\|'\w\)\%(\w\|::\|'\w\)*\_s*\|+ contained nextgr
 
 syn match perlFunction +\<sub\>\_s*+ nextgroup=perlSubName
 
-if exists("perl_want_scope_in_variables")
+if !exists("perl_no_scope_in_variables")
    syn match  perlFunctionPRef	"\h\w*::" contained
    syn match  perlFunctionName	"\h\w*[^:]" contained
 else
@@ -402,7 +398,7 @@ if exists("perl_fold")
   endif
 
   if exists("perl_fold_blocks")
-    syn region perlBlockFold start="^\z(\s*\)\%(if\|elsif\|unless\|for\|while\|until\)\s*(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" start="^\z(\s*\)foreach\s*\%(\%(my\|our\)\=\s*\S\+\s*\)\=(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
+    syn region perlBlockFold start="^\z(\s*\)\%(if\|elsif\|unless\|for\|while\|until\|given\)\s*(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" start="^\z(\s*\)foreach\s*\%(\%(my\|our\)\=\s*\S\+\s*\)\=(.*)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
     syn region perlBlockFold start="^\z(\s*\)\%(do\|else\)\%(\s*{\)\=\s*\%(#.*\)\=$" end="^\z1}\s*while" end="^\z1}\s*;\=\%(#.*\)\=$" transparent fold keepend
   endif
 
